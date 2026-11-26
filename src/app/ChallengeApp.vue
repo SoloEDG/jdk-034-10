@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Activity, ChevronRight, Mountain, Target } from 'lucide-vue-next';
 import { RouteList, WallBoard } from '../features/wall';
 import { ClimberPose, LimbControls, limbNames } from '../features/limbs';
 import { StaminaGauge } from '../features/stamina';
 import { ActionPanel } from '../features/actions';
 import { AttemptList, AttemptReview } from '../features/records';
+import { RelayView } from '../features/relay';
 import { useChallenge } from './useChallenge';
+
+type Mode = 'boulder' | 'relay';
+const mode = ref<Mode>('boulder');
 
 const {
   routeId, shownRoute, shownContacts, selected, shownStates, shownBalance, targetMark, locked,
@@ -21,11 +25,17 @@ const caption = computed(() => active.value ? '历史记录 · 第 ' + (step.val
 
 <template>
   <header class="masthead">
-    <div class="brand"><span class="brand-icon"><Mountain :size="24" /></span><strong>CRUX</strong><span>攀岩路线挑战</span></div>
-    <div class="top-status"><i></i> {{ active ? '历史回看' : result === 'success' ? '已完攀' : result === 'fall' ? '已结束' : '抱石挑战' }}</div>
+    <div class="brand"><span class="brand-icon"><Mountain :size="24" /></span><strong>CRUX</strong><span>攀岩训练台</span></div>
+    <nav class="mode-switch" aria-label="训练模式">
+      <button :class="{ on: mode === 'boulder' }" @click="mode = 'boulder'">抱石挑战</button>
+      <button :class="{ on: mode === 'relay' }" @click="mode = 'relay'">攀壁运包</button>
+    </nav>
+    <div v-if="mode === 'boulder'" class="top-status"><i></i> {{ active ? '历史回看' : result === 'success' ? '已完攀' : result === 'fall' ? '已结束' : '抱石挑战' }}</div>
   </header>
 
-  <main class="workspace">
+  <RelayView v-if="mode === 'relay'" />
+
+  <main v-else class="workspace">
     <div class="dashboard">
       <RouteList :active="routeId" :reviewing="Boolean(active)" @choose="start" />
       <WallBoard :route="shownRoute" :states="shownStates" :locked="locked" :caption="caption" @choose="chooseHold" @reset="start(routeId)">
